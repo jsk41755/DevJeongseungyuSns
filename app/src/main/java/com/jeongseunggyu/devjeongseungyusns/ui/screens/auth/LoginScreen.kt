@@ -30,12 +30,14 @@ import com.jeongseunggyu.devjeongseungyusns.ui.theme.Border
 import com.jeongseunggyu.devjeongseungyusns.ui.theme.Gray
 import com.jeongseunggyu.devjeongseungyusns.ui.theme.LightGray
 import com.jeongseunggyu.devjeongseungyusns.R
+import com.jeongseunggyu.devjeongseungyusns.routes.AuthRoute
+import com.jeongseunggyu.devjeongseungyusns.routes.AuthRouteAction
 import com.jeongseunggyu.devjeongseungyusns.ui.components.SnsBackButton
 import com.jeongseunggyu.devjeongseungyusns.ui.components.SnsPasswordTextField
 import com.jeongseunggyu.devjeongseungyusns.ui.components.SnsTextField
 
 @Composable
-fun LoginScreen(){
+fun LoginScreen(routeAction: AuthRouteAction){
 
     val emailInput = remember {
         mutableStateOf("")
@@ -46,8 +48,7 @@ fun LoginScreen(){
     }
 
     val isLoginBtnActive =
-        emailInput.value.isNotEmpty() &&
-                passwordInput.value.isNotEmpty()
+        emailInput.value.isNotEmpty() && passwordInput.value.isNotEmpty()
 
         Column(
             modifier = Modifier.padding(horizontal = 22.dp)
@@ -57,6 +58,7 @@ fun LoginScreen(){
                 modifier = Modifier.padding(vertical = 20.dp),
                 onClick = {
                 Log.d("로그인화면", "뒤로가기 버튼 클릭")
+                routeAction.goBack()
             })
 
             Text("로그인 화면",
@@ -93,7 +95,7 @@ fun LoginScreen(){
         ) {
             Text(text = "계정이 없으신가요?")
             TextButton(onClick = {
-                Log.d("로그인화면", "회원가입하러 가야 함")
+                routeAction.navTo(AuthRoute.REGISTER)
             }) {
                 Text(text = "회원가입 하러가기")
             }

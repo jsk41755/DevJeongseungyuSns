@@ -63,4 +63,8 @@ dependencies {
 
     def lottieVersion = "5.2.0"
     implementation "com.airbnb.android:lottie-compose:$lottieVersion"
+
+    //컴포즈 네비게이션
+    def nav_version = "2.5.3"
+    implementation "androidx.navigation:navigation-compose:$nav_version"
 }

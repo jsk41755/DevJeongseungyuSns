@@ -18,13 +18,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.airbnb.lottie.compose.*
 import com.jeongseunggyu.devjeongseungyusns.R
+import com.jeongseunggyu.devjeongseungyusns.routes.AuthRoute
+import com.jeongseunggyu.devjeongseungyusns.routes.AuthRouteAction
 import com.jeongseunggyu.devjeongseungyusns.ui.components.BaseButton
 import com.jeongseunggyu.devjeongseungyusns.ui.components.SnsButtonType
 import com.jeongseunggyu.devjeongseungyusns.ui.theme.Dark
 import com.jeongseunggyu.devjeongseungyusns.ui.theme.Gray
 
 @Composable
-fun WelcomeScreen(){
+fun WelcomeScreen(routeAction: AuthRouteAction){
     Column(
         modifier = Modifier.padding(horizontal = 22.dp),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -37,9 +39,7 @@ fun WelcomeScreen(){
         Spacer(modifier = Modifier.weight(1f))
 
         //로그인 버튼
-        BaseButton(title = "로그인", onClick = {
-            Log.d("웰컴스크린", "로그인 버튼 클릭")
-        })
+        BaseButton(title = "로그인", onClick = { routeAction.navTo(AuthRoute.LOGIN) })
         
         Spacer(modifier = Modifier.height(15.dp))
 
@@ -47,9 +47,7 @@ fun WelcomeScreen(){
         BaseButton(
             type = SnsButtonType.OUTLINE,
             title = "회원가입",
-            onClick = {
-            Log.d("웰컴스크린", "회원가입 버튼 클릭")
-        })
+            onClick = {routeAction.navTo(AuthRoute.REGISTER)})
 
         Spacer(modifier = Modifier.height(40.dp))
     }
