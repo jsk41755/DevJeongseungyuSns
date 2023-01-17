@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.os.PersistableBundle
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -28,6 +29,11 @@ class EditPostActivity: ComponentActivity(){
 
     override fun onCreate(savedInstanceState: Bundle?, persistentState: PersistableBundle?) {
         super.onCreate(savedInstanceState, persistentState)
+
+        window.setSoftInputMode(
+            WindowManager
+                .LayoutParams.SOFT_INPUT_ADJUST_RESIZE
+        )
 
         val postId: String = intent.getStringExtra(POST_ID)?: ""
 

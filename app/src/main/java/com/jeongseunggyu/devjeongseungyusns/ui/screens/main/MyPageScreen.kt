@@ -33,15 +33,31 @@ fun MyPageScreen(
 
     val postsListScrollState = rememberLazyListState()
 
+    val userId = authViewModel.currentUserEmailFlow.collectAsState()
+    val userEmail = authViewModel.currentUserEmailFlow.collectAsState()
+
+
     val coroutineScope = rememberCoroutineScope()
 
     Column(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(20.dp),
     ) {
-        Text(text = "마이페이지")
+        Text(text = "마이페이지", fontSize = 30.sp)
+
+        Text(text = "이메일:")
+        Text(text = userEmail.value)
+        
+        Spacer(modifier = Modifier.height(30.dp))
+
+        Text(text = "아이디:")
+        Text(text = userId.value)
+        
         TextButton(onClick = {
             coroutineScope.launch {
                 authViewModel.isLoggedIn.emit(false)
+                authViewModel.clearUserInfo()
             }
         }) {
             Text(text = "로그아웃")

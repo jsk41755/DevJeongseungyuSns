@@ -12,10 +12,7 @@ import androidx.compose.material.IconButton
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -45,16 +42,14 @@ fun LoginScreen(
     authViewModel: AuthViewModel
 ){
 
-    val emailInput = remember {
-        mutableStateOf("")
-    }
+    val emailInput = authViewModel.emailInputFlow.collectAsState()
 
-    val passwordInput = remember {
-        mutableStateOf("")
-    }
+    val passwordInput = authViewModel.passwordInputFlow.collectAsState()
 
     val isLoginBtnActive =
         emailInput.value.isNotEmpty() && passwordInput.value.isNotEmpty()
+
+    val isLoading = authViewModel.isLoadingFlow.collectAsState()
 
     val coroutineScope = rememberCoroutineScope()
 
@@ -75,13 +70,17 @@ fun LoginScreen(
             )
 
         SnsTextField(label = "이메일", value = emailInput.value, onValueChanged = {
-            emailInput.value = it
+            coroutineScope.launch {
+                authViewModel.emailInputFlow.emit(it)
+            }
         })
 
         Spacer(modifier = Modifier.height(30.dp))
 
         SnsPasswordTextField(label = "비밀번호", value = passwordInput.value, onValueChanged = {
-            passwordInput.value = it
+            coroutineScope.launch {
+                authViewModel.passwordInputFlow.emit(it)
+            }
         })
 
         Spacer(modifier = Modifier.height(30.dp))
@@ -90,8 +89,10 @@ fun LoginScreen(
         BaseButton(
             title = "로그인",
             enabled = isLoginBtnActive,
+            isLoading = isLoading.value,
             onClick = {
             Log.d("웰컴스크린", "로그인 버튼 클릭")
+                authViewModel.login()
         })
 
         Spacer(modifier = Modifier.height(15.dp))
@@ -103,18 +104,21 @@ fun LoginScreen(
         ) {
             Text(text = "계정이 없으신가요?")
             TextButton(onClick = {
+                coroutineScope.launch {
+                    authViewModel.clearInputs()
+                }
                 routeAction.navTo(AuthRoute.REGISTER)
             }) {
                 Text(text = "회원가입 하러가기")
             }
         }
 
-            TextButton(onClick = {
+            /*TextButton(onClick = {
                 coroutineScope.launch {
                     authViewModel.isLoggedIn.emit(true)
                 }
             }) {
                 Text(text = "로그인 완료")
-            }
+            }*/
     }
 }

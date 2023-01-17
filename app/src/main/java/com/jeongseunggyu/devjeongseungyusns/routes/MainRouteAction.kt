@@ -3,6 +3,25 @@ package com.jeongseunggyu.devjeongseungyusns.routes
 import androidx.navigation.NavHostController
 import com.jeongseunggyu.devjeongseungyusns.R
 
+const val ActivityCloseActionName = "CLOSE_ACTION"
+
+enum class ActivityCloseAction(val actionName: String){
+    POST_ADDED("POST_ADDED"),
+    POST_EDITED("POST_EDITED"),
+    POST_DELETED("POST_DELETED");
+
+    companion object{
+        fun getActionType(name: String) : ActivityCloseAction? {
+            return when(name){
+                POST_ADDED.actionName -> POST_ADDED
+                POST_EDITED.actionName -> POST_EDITED
+                POST_DELETED.actionName -> POST_DELETED
+                else -> null
+            }
+        }
+    }
+}
+
 sealed class MainRoute(
     open val routeName: String,
     open val title: String,

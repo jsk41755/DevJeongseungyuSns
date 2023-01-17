@@ -2,27 +2,34 @@ package com.jeongseunggyu.devjeongseungyusns.ui.screens.main
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
+import com.jeongseunggyu.devjeongseungyusns.network.data.Post
 import com.jeongseunggyu.devjeongseungyusns.routes.AuthRouteAction
 import com.jeongseunggyu.devjeongseungyusns.routes.MainRoute
 import com.jeongseunggyu.devjeongseungyusns.routes.MainRouteAction
 import com.jeongseunggyu.devjeongseungyusns.ui.components.SimpleDialog
 import com.jeongseunggyu.devjeongseungyusns.ui.components.SnsAddPostButton
 import com.jeongseunggyu.devjeongseungyusns.ui.components.SnsDialogAction
+import com.jeongseunggyu.devjeongseungyusns.ui.theme.Dark
 import com.jeongseunggyu.devjeongseungyusns.viewmodels.HomeViewModel
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 @Composable
@@ -32,7 +39,7 @@ fun HomeScreen(
 ){
     val isRefreshing by homeViewModel.isRefreshing.collectAsState()
 
-    val isLoading by homeViewModel.isLoading.collectAsState()
+    val isLoading by homeViewModel.isLoadingFlow.collectAsState()
 
     val postsListScrollState = rememberLazyListState()
 
@@ -44,6 +51,14 @@ fun HomeScreen(
 
     val isDialogShown = !selectedPostIdForDelete.isNullOrBlank()
 
+    val posts = homeViewModel.postFlow.collectAsState()
+
+    LaunchedEffect(key1 = Unit, block = {
+        homeViewModel.dataUpdatedFlow.collectLatest {
+            postsListScrollState.animateScrollToItem(posts.value.size)
+        }
+    })
+
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.TopCenter
@@ -53,19 +68,34 @@ fun HomeScreen(
             state = rememberSwipeRefreshState(isRefreshing),
             onRefresh = { homeViewModel.refreshData() },
         ) {
-            LazyColumn(
-                state = postsListScrollState,
-                verticalArrangement = Arrangement.spacedBy(20.dp),
-                contentPadding = PaddingValues(20.dp),
-                reverseLayout = true
-            ) {
-                items(30) { index ->
-                    PostItemView(index,
-                        coroutineScope,
-                        homeViewModel,
-                        onDeletePostClicked = {
-                            selectedPostIdForDelete = index.toString()
-                        })
+
+            Column() {
+                Surface(
+                    color = Dark,
+                    contentColor = Color.White
+                ) {
+                    Text(text = "총 포스팅  ${posts.value.size}",
+                        fontSize = 20.sp,
+                        modifier = Modifier
+                            .padding(10.dp)
+                            .fillMaxWidth()
+                    )
+                }
+
+                LazyColumn(
+                    state = postsListScrollState,
+                    verticalArrangement = Arrangement.spacedBy(20.dp),
+                    contentPadding = PaddingValues(20.dp),
+                    reverseLayout = true
+                ) {
+                    items(posts.value) { aPost ->
+                        PostItemView(aPost,
+                            coroutineScope,
+                            homeViewModel,
+                            onDeletePostClicked = {
+                                selectedPostIdForDelete = aPost.id.toString()
+                            })
+                    }
                 }
             }
 
@@ -78,6 +108,15 @@ fun HomeScreen(
                         homeViewModel.navAction.emit(MainRoute.AddPost)
                     }
                 })
+
+            if (isLoading){
+                CircularProgressIndicator(
+                    color = Color.White,
+                    modifier = Modifier
+                        .scale(0.7f)
+                        .padding(5.dp)
+                )
+            }
 
             if(isDialogShown) {
                 SimpleDialog(isLoading,
@@ -96,7 +135,7 @@ fun HomeScreen(
 
 @Composable
 fun PostItemView(
-    index : Int,
+    data : Post,
     coroutineScope : CoroutineScope,
     homeViewModel: HomeViewModel,
     onDeletePostClicked: () -> Unit){
@@ -108,9 +147,12 @@ fun PostItemView(
             .height(IntrinsicSize.Max)
     ) {
         Column() {
+            
+            Text(text = "userId: ${data.userID}")
+            
             Row() {
                 Text(
-                    text = "$index",
+                    text = "${data.id}",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier
@@ -126,7 +168,7 @@ fun PostItemView(
                     coroutineScope.launch {
                         homeViewModel
                             .navAction
-                            .emit(MainRoute.EditPost(postId = "$index"))
+                            .emit(MainRoute.EditPost(postId = "${data.id}"))
                     }
                 }) {
                     Text(text = "수정")
@@ -134,13 +176,13 @@ fun PostItemView(
                 }
             }
             Text(
-                text = "$index - title",
+                text = "${data.title}",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(16.dp)
             )
             Text(
-                text = "$index - content",
+                text = "${data.content}",
                 maxLines = 5,
                 modifier = Modifier
                     .padding(16.dp)

@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,10 +25,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.jeongseunggyu.devjeongseungyusns.routes.AuthRoute
-import com.jeongseunggyu.devjeongseungyusns.routes.AuthRouteAction
-import com.jeongseunggyu.devjeongseungyusns.routes.MainRoute
-import com.jeongseunggyu.devjeongseungyusns.routes.MainRouteAction
+import com.jeongseunggyu.devjeongseungyusns.routes.*
 import com.jeongseunggyu.devjeongseungyusns.ui.screens.auth.LoginScreen
 import com.jeongseunggyu.devjeongseungyusns.ui.screens.auth.RegisterScreen
 import com.jeongseunggyu.devjeongseungyusns.ui.screens.auth.WelcomeScreen
@@ -48,6 +46,19 @@ class MainActivity : ComponentActivity() {
     private val authViewModel: AuthViewModel by viewModels()
     private val homeViewModel: HomeViewModel by viewModels()
 
+    //액티비티가 닫아질 때 이벤트
+    private val activityResultLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()){ result ->
+        if(result.resultCode == RESULT_OK){
+            val getActionString = result.data?.getStringExtra("CLOSE_ACTION")
+            val closeAction : ActivityCloseAction? = ActivityCloseAction.getActionType(
+                ActivityCloseActionName)
+            closeAction?.let {
+                homeViewModel.refreshData()
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -56,17 +67,17 @@ class MainActivity : ComponentActivity() {
                 .LayoutParams.SOFT_INPUT_ADJUST_RESIZE
         )
 
+
         lifecycleScope.launch {
             homeViewModel.navAction.collectLatest {
                 when(it) {
                     is MainRoute.AddPost -> {
-                        startActivity(AddPostActivity.newIntent(this@MainActivity))
+                        //startActivity(AddPostActivity.newIntent(this@MainActivity))
+                        activityResultLauncher.launch(AddPostActivity.newIntent(this@MainActivity))
                     }
                     is MainRoute.EditPost -> {
-                        startActivity(EditPostActivity.newIntent(
-                            this@MainActivity,
-                            it.postId
-                        ))
+                        val intent = EditPostActivity.newIntent(this@MainActivity, it.postId)
+                        activityResultLauncher.launch(intent)
                     }
                     else -> {}
                 }
@@ -173,7 +184,7 @@ fun AuthNavHost(
             LoginScreen(routeAction, authViewModel)
         }
         composable(AuthRoute.REGISTER.routeName){
-            RegisterScreen(routeAction)
+            RegisterScreen(authViewModel, routeAction)
         }
     }
 }
