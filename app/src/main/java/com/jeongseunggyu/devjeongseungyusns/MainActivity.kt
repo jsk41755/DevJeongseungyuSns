@@ -5,27 +5,43 @@ import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Surface
-import androidx.compose.material.Text
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.lifecycleScope
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.jeongseunggyu.devjeongseungyusns.routes.AuthRoute
 import com.jeongseunggyu.devjeongseungyusns.routes.AuthRouteAction
+import com.jeongseunggyu.devjeongseungyusns.routes.MainRoute
+import com.jeongseunggyu.devjeongseungyusns.routes.MainRouteAction
 import com.jeongseunggyu.devjeongseungyusns.ui.screens.auth.LoginScreen
 import com.jeongseunggyu.devjeongseungyusns.ui.screens.auth.RegisterScreen
 import com.jeongseunggyu.devjeongseungyusns.ui.screens.auth.WelcomeScreen
+import com.jeongseunggyu.devjeongseungyusns.ui.screens.main.HomeScreen
+import com.jeongseunggyu.devjeongseungyusns.ui.screens.main.MyPageScreen
+import com.jeongseunggyu.devjeongseungyusns.ui.theme.Dark
 import com.jeongseunggyu.devjeongseungyusns.ui.theme.DevJeongseungyuSnsTheme
+import com.jeongseunggyu.devjeongseungyusns.ui.theme.Gray
+import com.jeongseunggyu.devjeongseungyusns.ui.theme.LightGray
 import com.jeongseunggyu.devjeongseungyusns.viewmodels.AuthViewModel
 import com.jeongseunggyu.devjeongseungyusns.viewmodels.HomeViewModel
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.selects.select
 
 class MainActivity : ComponentActivity() {
 
@@ -39,6 +55,23 @@ class MainActivity : ComponentActivity() {
             WindowManager
                 .LayoutParams.SOFT_INPUT_ADJUST_RESIZE
         )
+
+        lifecycleScope.launch {
+            homeViewModel.navAction.collectLatest {
+                when(it) {
+                    is MainRoute.AddPost -> {
+                        startActivity(AddPostActivity.newIntent(this@MainActivity))
+                    }
+                    is MainRoute.EditPost -> {
+                        startActivity(EditPostActivity.newIntent(
+                            this@MainActivity,
+                            it.postId
+                        ))
+                    }
+                    else -> {}
+                }
+            }
+        }
 
         setContent {
             DevJeongseungyuSnsTheme {
@@ -59,18 +92,67 @@ fun AppScreen(
     authViewModel: AuthViewModel,
     homeViewModel: HomeViewModel
 ){
+
+    val isLoggedIn = authViewModel.isLoggedIn.collectAsState()
+
+    val mainNavController = rememberNavController()
+    val mainRouteAction = remember(mainNavController){
+        MainRouteAction(mainNavController)
+    }
     
     val authNavController = rememberNavController()
-
     val authRouteAction = remember(authNavController){
         AuthRouteAction(authNavController)
     }
 
-    AuthNavHost(
-        authNavController = authNavController,
-        authViewModel = authViewModel,
-        routeAction = authRouteAction
-    )
+    //현재 뒤로가기 스택의 마지막을 가져옴
+    val authBackStackEntry = authNavController.currentBackStackEntryAsState()
+
+    val mainBackStack = mainNavController.currentBackStackEntryAsState()
+
+    if (!isLoggedIn.value){
+        AuthNavHost(
+            authNavController = authNavController,
+            authViewModel = authViewModel,
+            routeAction = authRouteAction
+        )
+    } else {
+        Scaffold(bottomBar = {
+            SnsBottomNav(mainRouteAction, mainBackStack.value)
+        }) {
+            Column(
+                modifier = Modifier.padding(bottom = it.calculateBottomPadding())
+            ) {
+                MainNavHost( mainNavController,
+                    authViewModel = authViewModel,
+                    homeViewModel = homeViewModel,
+                    routeAction = mainRouteAction)
+            }
+        }
+
+
+    }
+
+}
+
+@Composable
+fun MainNavHost(
+    mainNavController: NavHostController,//네비게이션 호스트 컨트롤러 받기
+    startRouter: MainRoute = MainRoute.Home, //웰컴에서 시작
+    authViewModel: AuthViewModel,
+    homeViewModel: HomeViewModel,
+    routeAction: MainRouteAction
+) {
+    NavHost(
+        navController = mainNavController,
+        startDestination = startRouter.routeName){
+        composable(MainRoute.Home.routeName){
+            HomeScreen(homeViewModel, routeAction)
+        }
+        composable(MainRoute.MyPage.routeName){
+            MyPageScreen(homeViewModel, authViewModel, routeAction)
+        }
+    }
 }
 
 //컴포저블에서 네비게이션 처리법
@@ -88,13 +170,40 @@ fun AuthNavHost(
             WelcomeScreen(routeAction)
         }
         composable(AuthRoute.LOGIN.routeName){
-            LoginScreen(routeAction)
+            LoginScreen(routeAction, authViewModel)
         }
         composable(AuthRoute.REGISTER.routeName){
             RegisterScreen(routeAction)
         }
     }
 }
+
+@Composable
+fun SnsBottomNav(
+    mainRouteAction: MainRouteAction,
+    mainBackStack: NavBackStackEntry?
+){
+    val bottomRoutes = listOf<MainRoute>(MainRoute.Home, MainRoute.MyPage)
+    BottomNavigation(
+        backgroundColor = LightGray,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        bottomRoutes.forEach {
+            BottomNavigationItem(
+                label = { Text(text = it.title)},
+                icon = {
+                       it.iconResId?.let { iconId ->
+                           Icon(painter = painterResource(iconId),
+                               contentDescription = it.title)
+                       }
+                },
+                selectedContentColor = Dark,
+                unselectedContentColor = Gray,
+                selected = (mainBackStack?.destination?.route) == it.routeName,
+                onClick = { mainRouteAction.navTo(it) })
+            }
+        }
+    }
 
 @Composable
 fun Greeting(name: String) {

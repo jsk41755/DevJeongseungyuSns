@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -139,7 +140,7 @@ fun SnsBackButton(
 ){
     Button(
         modifier = modifier
-            .size(50.dp),
+            .size(55.dp),
         shape = RoundedCornerShape(12.dp),
         colors = ButtonDefaults.buttonColors(
             contentColor = Dark,
@@ -153,5 +154,28 @@ fun SnsBackButton(
                 modifier = Modifier.size(20.dp),
                 painter = painterResource(id = R.drawable.back_arrow),
                 contentDescription = "뒤로가기 버튼")
+    }
+}
+
+@Composable
+fun SnsAddPostButton(
+    modifier: Modifier = Modifier,
+    onClick: ()-> Unit
+){
+    Button(
+        modifier = modifier
+            .size(50.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = ButtonDefaults.buttonColors(
+            contentColor = Color.White,
+            backgroundColor = Dark
+        ),
+        onClick = onClick
+    ) {
+        Image(
+            modifier = Modifier.size(25.dp),
+            painter = painterResource(id = R.drawable.pen),
+            colorFilter = ColorFilter.tint(Color.White),
+            contentDescription = "포스트 추가하기 버튼")
     }
 }

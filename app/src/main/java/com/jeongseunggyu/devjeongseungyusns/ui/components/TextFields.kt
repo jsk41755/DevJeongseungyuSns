@@ -32,6 +32,7 @@ import com.jeongseunggyu.devjeongseungyusns.ui.theme.LightGray
 
 @Composable
 fun SnsTextField(
+    modifier: Modifier = Modifier,
     label : String,
     keyboardType: KeyboardType = KeyboardType.Text,
     singleLine: Boolean = true,
@@ -42,7 +43,7 @@ fun SnsTextField(
         Text(text = label, color = Gray)
         Surface(
             color = LightGray,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = modifier.fillMaxWidth(),
             border = BorderStroke(1.dp, Border),
             shape = RoundedCornerShape(8.dp)
         ) {

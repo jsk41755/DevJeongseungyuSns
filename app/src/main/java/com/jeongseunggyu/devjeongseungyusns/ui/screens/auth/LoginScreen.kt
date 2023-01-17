@@ -15,6 +15,7 @@ import androidx.compose.material.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -35,9 +36,14 @@ import com.jeongseunggyu.devjeongseungyusns.routes.AuthRouteAction
 import com.jeongseunggyu.devjeongseungyusns.ui.components.SnsBackButton
 import com.jeongseunggyu.devjeongseungyusns.ui.components.SnsPasswordTextField
 import com.jeongseunggyu.devjeongseungyusns.ui.components.SnsTextField
+import com.jeongseunggyu.devjeongseungyusns.viewmodels.AuthViewModel
+import kotlinx.coroutines.launch
 
 @Composable
-fun LoginScreen(routeAction: AuthRouteAction){
+fun LoginScreen(
+    routeAction: AuthRouteAction,
+    authViewModel: AuthViewModel
+){
 
     val emailInput = remember {
         mutableStateOf("")
@@ -49,6 +55,8 @@ fun LoginScreen(routeAction: AuthRouteAction){
 
     val isLoginBtnActive =
         emailInput.value.isNotEmpty() && passwordInput.value.isNotEmpty()
+
+    val coroutineScope = rememberCoroutineScope()
 
         Column(
             modifier = Modifier.padding(horizontal = 22.dp)
@@ -100,5 +108,13 @@ fun LoginScreen(routeAction: AuthRouteAction){
                 Text(text = "회원가입 하러가기")
             }
         }
+
+            TextButton(onClick = {
+                coroutineScope.launch {
+                    authViewModel.isLoggedIn.emit(true)
+                }
+            }) {
+                Text(text = "로그인 완료")
+            }
     }
 }
