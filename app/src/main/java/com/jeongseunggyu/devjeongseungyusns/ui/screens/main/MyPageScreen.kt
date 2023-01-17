@@ -33,7 +33,7 @@ fun MyPageScreen(
 
     val postsListScrollState = rememberLazyListState()
 
-    val userId = authViewModel.currentUserEmailFlow.collectAsState()
+    val userId = authViewModel.currentUserIdFlow.collectAsState()
     val userEmail = authViewModel.currentUserEmailFlow.collectAsState()
 
 

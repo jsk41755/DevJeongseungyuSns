@@ -27,6 +27,7 @@ import com.jeongseunggyu.devjeongseungyusns.ui.components.SimpleDialog
 import com.jeongseunggyu.devjeongseungyusns.ui.components.SnsAddPostButton
 import com.jeongseunggyu.devjeongseungyusns.ui.components.SnsDialogAction
 import com.jeongseunggyu.devjeongseungyusns.ui.theme.Dark
+import com.jeongseunggyu.devjeongseungyusns.viewmodels.AuthViewModel
 import com.jeongseunggyu.devjeongseungyusns.viewmodels.HomeViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collectLatest
@@ -35,6 +36,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun HomeScreen(
     homeViewModel: HomeViewModel, //API 땡기기
+    authViewModel: AuthViewModel,
     routeAction: MainRouteAction
 ){
     val isRefreshing by homeViewModel.isRefreshing.collectAsState()
@@ -53,8 +55,10 @@ fun HomeScreen(
 
     val posts = homeViewModel.postFlow.collectAsState()
 
+
     LaunchedEffect(key1 = Unit, block = {
         homeViewModel.dataUpdatedFlow.collectLatest {
+            selectedPostIdForDelete = null
             postsListScrollState.animateScrollToItem(posts.value.size)
         }
     })
@@ -92,6 +96,7 @@ fun HomeScreen(
                         PostItemView(aPost,
                             coroutineScope,
                             homeViewModel,
+                            authViewModel,
                             onDeletePostClicked = {
                                 selectedPostIdForDelete = aPost.id.toString()
                             })
@@ -125,6 +130,9 @@ fun HomeScreen(
                             SnsDialogAction.CLOSE -> selectedPostIdForDelete = null
                             SnsDialogAction.ACTION -> {
                                 println("아이템 삭제해야함 $selectedPostIdForDelete")
+                                selectedPostIdForDelete?.let { postId ->
+                                    homeViewModel.deletePostItem(postId)
+                                }
                             }
                         }
                     })
@@ -138,7 +146,11 @@ fun PostItemView(
     data : Post,
     coroutineScope : CoroutineScope,
     homeViewModel: HomeViewModel,
+    authViewModel: AuthViewModel,
     onDeletePostClicked: () -> Unit){
+
+    val currentUserId =authViewModel.currentUserIdFlow.collectAsState()
+
     Surface(
         shape = RoundedCornerShape(12.dp),
         elevation = 8.dp,
@@ -160,20 +172,23 @@ fun PostItemView(
                         .weight(1f)
                 )
 
-                TextButton(onClick = onDeletePostClicked) {
-                    Text(text = "삭제")
-                }
-
-                TextButton(onClick = {
-                    coroutineScope.launch {
-                        homeViewModel
-                            .navAction
-                            .emit(MainRoute.EditPost(postId = "${data.id}"))
+                if (currentUserId.value == data.userID.toString())
+                Row() {
+                    TextButton(onClick = onDeletePostClicked) {
+                        Text(text = "삭제")
                     }
-                }) {
-                    Text(text = "수정")
 
+                    TextButton(onClick = {
+                        coroutineScope.launch {
+                            homeViewModel
+                                .navAction
+                                .emit(MainRoute.EditPost(postId = "${data.id}"))
+                        }
+                    }) {
+                        Text(text = "수정")
+                    }
                 }
+
             }
             Text(
                 text = "${data.title}",

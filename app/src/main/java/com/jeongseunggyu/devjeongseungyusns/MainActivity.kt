@@ -158,7 +158,7 @@ fun MainNavHost(
         navController = mainNavController,
         startDestination = startRouter.routeName){
         composable(MainRoute.Home.routeName){
-            HomeScreen(homeViewModel, routeAction)
+            HomeScreen(homeViewModel, authViewModel, routeAction)
         }
         composable(MainRoute.MyPage.routeName){
             MyPageScreen(homeViewModel, authViewModel, routeAction)

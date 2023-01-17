@@ -47,6 +47,10 @@ class HomeViewModel : ViewModel(){
         viewModelScope.launch { callFetchPosts() }
     }
 
+    fun deletePostItem(postId: String){
+        viewModelScope.launch { callDeletePostItem(postId) }
+    }
+
     private suspend fun callFetchPosts(){
         withContext(Dispatchers.IO){
             kotlin.runCatching {
@@ -56,6 +60,22 @@ class HomeViewModel : ViewModel(){
             }.onSuccess {
                 postFlow.emit(it)
                 dataUpdatedFlow.emit(Unit)
+                isLoadingFlow.emit(false)
+            }.onFailure {
+                Log.d(TAG, "회원가입 실패 - onFailure error: ${it.localizedMessage}")
+                isLoadingFlow.emit(false)
+            }
+        }
+    }
+
+    private suspend fun callDeletePostItem(postId: String){
+        withContext(Dispatchers.IO){
+            kotlin.runCatching {
+                PostRepository.deletePostItem(postId)
+            }.onSuccess {
+                if(it.status.value == 204){
+                    refreshData()
+                }
                 isLoadingFlow.emit(false)
             }.onFailure {
                 Log.d(TAG, "회원가입 실패 - onFailure error: ${it.localizedMessage}")

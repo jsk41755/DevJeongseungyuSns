@@ -24,3 +24,9 @@ data class PostRequest (
     @SerialName("user_id")
     val userID: String? = null
 )
+
+@Serializable
+data class PostEditRequest (
+    val title: String? = null,
+    val content: String? = null,
+)
